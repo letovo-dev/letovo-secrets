@@ -34,7 +34,7 @@ def process_folder_name_step(message: telebot.types.Message):
     bot.reply_to(message, "Введите название файла:")
     bot.register_next_step_handler(message, process_name_step, message.text)
 
-@bot.message_handler(commands=['add'])
+@bot.message_handler(commands=['add_secret'])
 def addfile(message: telebot.types.Message):
     bot.reply_to(message, "Введите название статьи:")
     bot.register_next_step_handler(message, process_folder_name_step)
@@ -43,8 +43,8 @@ def addfile(message: telebot.types.Message):
 
 @bot.message_handler(commands=['qr'])
 def create_qr(message: telebot.types.Message):
-    qr = pyqrcode.create(os.getenv('CURRENT_IP') + ':5000' + '/qr/' + message.folder_name.split()[1])
-    qr_file_path = os.path.join("../qr_codes", str(message.folder_name.split()[1:]) + '.png')
+    qr = pyqrcode.create(os.getenv('CURRENT_IP') + ':5000' + '/qr/' + message.text.split()[1])
+    qr_file_path = os.path.join("./qr_codes", str(message.text.split()[1:]) + '.png')
     if not os.path.exists("./qr_codes"):
         os.makedirs("./qr_codes")
     qr.png(qr_file_path, scale=8)
@@ -52,8 +52,9 @@ def create_qr(message: telebot.types.Message):
         bot.send_photo(message.chat.id, qr_file)
 
 def process_subfolder(message: telebot.types.Message, folder_name):
-    with open(os.path.join('.secret_files', folder_name, "subfolder"), "w") as subfolder_file:
+    with open(os.path.join('./secret_files', folder_name, "subfolder"), "w") as subfolder_file:
         subfolder_file.write(message.text)
+    bot.reply_to(message, "Подпапка добавлена")
 
 def get_folder(message: telebot.types.Message):
     bot.reply_to(message, "Введите полную подпапку:")

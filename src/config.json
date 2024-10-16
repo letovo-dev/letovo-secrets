@@ -1,4 +1,5 @@
 {
-    "wiki_path": "../wiki", 
-    "token": "6097832846:AAECd6xe5lo0KRYl__Fwh0i5sy9SEcnqISA"
+    "wiki_path": "../letovo-wiki/docs/", 
+    "token": "", 
+    "secrets_path": "../letovo-wiki/docs/"
 }
