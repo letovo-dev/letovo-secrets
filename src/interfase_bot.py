@@ -51,4 +51,17 @@ def create_qr(message: telebot.types.Message):
     with open(qr_file_path, 'rb') as qr_file:
         bot.send_photo(message.chat.id, qr_file)
 
+def process_subfolder(message: telebot.types.Message, folder_name):
+    with open(os.path.join('.secret_files', folder_name, "subfolder"), "w") as subfolder_file:
+        subfolder_file.write(message.text)
+
+def get_folder(message: telebot.types.Message):
+    bot.reply_to(message, "Введите полную подпапку:")
+    bot.register_next_step_handler(message, process_subfolder, message.text)
+
+@bot.message_handler(commands=['subfolders'])
+def add_subfolder(message: telebot.types.Message):
+    bot.reply_to(message, "Введите название статьи:")
+    bot.register_next_step_handler(message, get_folder)
+
 bot.infinity_polling()
