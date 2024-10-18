@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from flask import Flask, send_file, abort
 import os, shutil
 import json

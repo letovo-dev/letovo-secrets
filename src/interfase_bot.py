@@ -1,7 +1,10 @@
+#!/usr/bin/python
+
 import telebot
 import json
 import os
 import pyqrcode
+import hashlib
 
 with open('./src/config.json') as config_file:
     config = json.load(config_file)
@@ -10,13 +13,16 @@ with open('./src/config.json') as config_file:
 token = config['token']
 bot=telebot.TeleBot(token)
 
-def process_file_step(message: telebot.types.Message, folder_name, file_name):
+def process_file_step(message: telebot.types.Message, folder_name):
     if message.document:
         file_info = bot.get_file(message.document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
+        file_name = message.document.file_name
     elif message.photo:
         file_info = bot.get_file(message.photo[-1].file_id)
         downloaded_file = bot.download_file(file_info.file_path)
+        # file_name = message.photo[-1].file_id[10:30]
+        file_name = str(hashlib.sha1(message.photo[-1].file_id.encode("utf-8")).hexdigest()) 
 
     print("./secret_files", folder_name, file_name, folder_name, "\n")
 
@@ -24,20 +30,26 @@ def process_file_step(message: telebot.types.Message, folder_name, file_name):
         os.makedirs(os.path.join("./secret_files", folder_name))
     with open(os.path.join("./secret_files", folder_name, file_name), 'wb') as new_file:
         new_file.write(downloaded_file)
-    bot.send_message(message.chat.id, 'File saved as {} in {}'.format(file_name, folder_name))
+    file_name_button = telebot.types.InlineKeyboardButton(text='Изменить имя файла', callback_data=f"{folder_name}_-_{file_name}")
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(file_name_button)
+    bot.send_message(message.chat.id, 'File saved as {} in {}. \nYou really need to change name if it is pic.'.format(file_name, folder_name), reply_markup=keyboard)
 
-def process_name_step(message: telebot.types.Message, folder_name):
+def process_name_step(message: telebot.types.Message):
     bot.reply_to(message, "Отправьте файл:")
-    bot.register_next_step_handler(message, process_file_step, folder_name, message.text)
+    bot.register_next_step_handler(message, process_file_step, message.text)
 
-def process_folder_name_step(message: telebot.types.Message):
-    bot.reply_to(message, "Введите название файла:")
-    bot.register_next_step_handler(message, process_name_step, message.text)
+def change_name_step(message: telebot.types.Message, folder_name, file_name):
+    os.rename(os.path.join("./secret_files", folder_name, file_name), os.path.join("./secret_files", folder_name, message.text))
+    file_name_button = telebot.types.InlineKeyboardButton(text='Изменить имя файла', callback_data=f"{folder_name}_-_{message.text}")
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(file_name_button)
+    bot.reply_to(message, "Имя файла изменено на {}".format(message.text), reply_markup=keyboard)
 
 @bot.message_handler(commands=['add_secret'])
 def addfile(message: telebot.types.Message):
     bot.reply_to(message, "Введите название статьи:")
-    bot.register_next_step_handler(message, process_folder_name_step)
+    bot.register_next_step_handler(message, process_name_step)
 
 
 
@@ -64,5 +76,17 @@ def get_folder(message: telebot.types.Message):
 def add_subfolder(message: telebot.types.Message):
     bot.reply_to(message, "Введите название статьи:")
     bot.register_next_step_handler(message, get_folder)
+
+# @bot.callback_query_handler(func=lambda message: os.path.exists(os.path.join("./secret_files", message.text.split('_-_')[0], message.text.split('_-_')[1])))
+# def process_folder_name_step(message: telebot.types.Message):
+#     bot.reply_to(message, "Введите новое название файла:")
+#     bot.register_next_step_handler(message, change_name_step, message.text.split('_-_')[0], message.text.split('_-_')[1])
+
+@bot.callback_query_handler(func=lambda call: True)
+def process_folder_name_step(call: telebot.types.CallbackQuery):
+    folder, file = call.data.split('_-_')
+    bot.send_message(call.message.chat.id, "Введите новое имя файла:")
+    bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+    bot.register_next_step_handler(call.message, change_name_step, folder, file)
 
 bot.infinity_polling()
