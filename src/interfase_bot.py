@@ -6,7 +6,9 @@ import os
 import pyqrcode
 import hashlib
 
-with open('./src/config.json') as config_file:
+current_file_path = os.path.abspath(__file__)
+
+with open(os.path.join(current_file_path, '/src/config.json')) as config_file:
     config = json.load(config_file)
 
 
@@ -24,11 +26,11 @@ def process_file_step(message: telebot.types.Message, folder_name):
         # file_name = message.photo[-1].file_id[10:30]
         file_name = str(hashlib.sha1(message.photo[-1].file_id.encode("utf-8")).hexdigest()) 
 
-    print("./secret_files", folder_name, file_name, folder_name, "\n")
+    print(os.path.join(current_file_path, "secret_files"), folder_name, file_name, folder_name, "\n")
 
-    if not os.path.exists(os.path.join("./secret_files", folder_name)):
-        os.makedirs(os.path.join("./secret_files", folder_name))
-    with open(os.path.join("./secret_files", folder_name, file_name), 'wb') as new_file:
+    if not os.path.exists(os.path.join(current_file_path, "secret_files", folder_name)):
+        os.makedirs(os.path.join(current_file_path, "secret_files", folder_name))
+    with open(os.path.join(current_file_path, "secret_files", folder_name, file_name), 'wb') as new_file:
         new_file.write(downloaded_file)
     file_name_button = telebot.types.InlineKeyboardButton(text='Изменить имя файла', callback_data=f"{folder_name}_-_{file_name}")
     keyboard = telebot.types.InlineKeyboardMarkup()
@@ -40,7 +42,7 @@ def process_name_step(message: telebot.types.Message):
     bot.register_next_step_handler(message, process_file_step, message.text)
 
 def change_name_step(message: telebot.types.Message, folder_name, file_name):
-    os.rename(os.path.join("./secret_files", folder_name, file_name), os.path.join("./secret_files", folder_name, message.text))
+    os.rename(os.path.join(current_file_path, "secret_files", folder_name, file_name), os.path.join("./secret_files", folder_name, message.text))
     file_name_button = telebot.types.InlineKeyboardButton(text='Изменить имя файла', callback_data=f"{folder_name}_-_{message.text}")
     keyboard = telebot.types.InlineKeyboardMarkup()
     keyboard.add(file_name_button)
@@ -56,15 +58,15 @@ def addfile(message: telebot.types.Message):
 @bot.message_handler(commands=['qr'])
 def create_qr(message: telebot.types.Message):
     qr = pyqrcode.create(os.getenv('CURRENT_IP') + ':5000' + '/qr/' + message.text.split()[1])
-    qr_file_path = os.path.join("./qr_codes", str(message.text.split()[1:]) + '.png')
-    if not os.path.exists("./qr_codes"):
-        os.makedirs("./qr_codes")
+    qr_file_path = os.path.join(current_file_path, "qr_codes", str(message.text.split()[1:]) + '.png')
+    if not os.path.exists(os.path.join(current_file_path, "qr_codes")):
+        os.makedirs(os.path.join(current_file_path, "qr_codes"))
     qr.png(qr_file_path, scale=8)
     with open(qr_file_path, 'rb') as qr_file:
         bot.send_photo(message.chat.id, qr_file)
 
 def process_subfolder(message: telebot.types.Message, folder_name):
-    with open(os.path.join('./secret_files', folder_name, "subfolder"), "w") as subfolder_file:
+    with open(os.path.join(current_file_path, 'secret_files', folder_name, "subfolder"), "w") as subfolder_file:
         subfolder_file.write(message.text)
     bot.reply_to(message, "Подпапка добавлена")
 

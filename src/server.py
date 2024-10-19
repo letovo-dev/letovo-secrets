@@ -6,10 +6,12 @@ import json
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+current_file_path = os.path.abspath(__file__)
+
 app = Flask(__name__)
 
 
-with open('./src/config.json') as config_file:
+with open(os.path.join(current_file_path, 'src/config.json')) as config_file:
     config = json.load(config_file)
 
 limiter = Limiter(
@@ -22,7 +24,7 @@ limiter = Limiter(
 @app.route('/qr/<filename>', methods=['GET'])
 @limiter.limit("10 per day")
 def get_qr_code(filename):
-    file_path = os.path.join('secret_files', filename)
+    file_path = os.path.join(current_file_path, 'secret_files', filename)
     if os.path.isdir(file_path):
         subfolder = ""
         if os.path.exists(os.path.join(file_path, 'subfolder')):
@@ -31,15 +33,15 @@ def get_qr_code(filename):
                 if ".." in subfolder or subfolder.startswith("/"):
                     abort(403, description="have you found a bot or you just are being silly?\nanyway, go duck yourself")
             # os.remove(os.path.join(file_path, 'subfolder'))
-            print(os.path.join(config['wiki_path'], subfolder))
-            if not os.path.exists(os.path.join(config['wiki_path'], subfolder)):
-                os.mkdir(os.path.join(config['wiki_path'], subfolder))
+            print(os.path.join(current_file_path, config['wiki_path'], subfolder))
+            if not os.path.exists(current_file_path, os.path.join(config['wiki_path'], subfolder)):
+                os.mkdir(os.path.join(current_file_path, config['wiki_path'], subfolder))
 
         # for file in os.listdir(config['wiki_path']):
         #     os.remove(os.path.join(config['wiki_path'], subfolder, file))
 
         for file in os.listdir(file_path):
-            shutil.copy(os.path.join(file_path, file), os.path.join(config['wiki_path'], subfolder, file))
+            shutil.copy(os.path.join(file_path, file), os.path.join(current_file_path, config['wiki_path'], subfolder, file))
     else:
         abort(404, description="Resource not found")
     return send_file("./congrats.html")
