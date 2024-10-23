@@ -39,12 +39,11 @@ def get_qr_code(filename):
                 if ".." in subfolder or subfolder.startswith("/"):
                     abort(403, description="have you found a bot or you just are being silly?\nanyway, go duck yourself")
 
-            print(os.path.join(current_file_path, config['wiki_path'], subfolder))
-            if not os.path.exists(current_file_path, os.path.join(config['wiki_path'], subfolder)):
-                os.mkdir(os.path.join(current_file_path, config['wiki_path'], subfolder))
+            if not os.path.exists(os.path.join(config['wiki_path'], subfolder)):
+                os.mkdir(os.path.join(config['wiki_path'], subfolder))
 
         for file in os.listdir(file_path):
-            shutil.copy(os.path.join(file_path, file), os.path.join(current_file_path, config['wiki_path'], subfolder, file))
+            shutil.copy(os.path.join(file_path, file), os.path.join(config['wiki_path'], subfolder, file))
     else:
         abort(404, description="Resource not found")
     return send_file("./congrats.html")

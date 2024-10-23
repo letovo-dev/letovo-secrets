@@ -44,7 +44,7 @@ def process_name_step(message: telebot.types.Message):
     bot.register_next_step_handler(message, process_file_step, message.text)
 
 def change_name_step(message: telebot.types.Message, folder_name, file_name):
-    os.rename(os.path.join(current_file_path, "secret_files", folder_name, file_name), os.path.join("./secret_files", folder_name, message.text))
+    os.rename(os.path.join(current_file_path, "secret_files", folder_name, file_name), os.path.join(current_file_path, "secret_files", folder_name, message.text))
     file_name_button = telebot.types.InlineKeyboardButton(text='Изменить имя файла', callback_data=f"{folder_name}_-_{message.text}")
     keyboard = telebot.types.InlineKeyboardMarkup()
     keyboard.add(file_name_button)
@@ -82,7 +82,11 @@ def add_subfolder(message: telebot.types.Message):
     bot.register_next_step_handler(message, get_folder)
 
 def get_to_publish(message: telebot.types.Message):
-    requests.get(os.getenv('CURRENT_IP') + ':5000' + '/qr/' + message.text)
+    resp = requests.get('http://127.0.0.1:5000/qr/' + message.text)
+    if resp.status_code == 200:
+        bot.reply_to(message, "Статья опубликована")
+    else:
+        bot.reply_to(message, "Что-то пошло не так")
 
 @bot.message_handler(commands=['publish'])
 def add_subfolder(message: telebot.types.Message):
@@ -100,5 +104,17 @@ def process_folder_name_step(call: telebot.types.CallbackQuery):
     bot.send_message(call.message.chat.id, "Введите новое имя файла:")
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
     bot.register_next_step_handler(call.message, change_name_step, folder, file)
+
+
+@bot.message_handler(commands=['help'])
+def send_help(message: telebot.types.Message):
+    help_text = (
+        "/add_secret - Добавить секретный файл\n"
+        "/qr <text> - Создать QR-код\n"
+        "/subfolders - Добавить подпапку\n"
+        "/publish - Опубликовать статью\n"
+        "/help - Показать это сообщение"
+    )
+    bot.reply_to(message, help_text)
 
 bot.infinity_polling()
