@@ -14,6 +14,7 @@ with open(os.path.join(current_file_path, 'src/config.json')) as config_file:
 
 
 token = config['token']
+server_ip = config['server_ip']
 bot=telebot.TeleBot(token)
 
 def process_file_step(message: telebot.types.Message, folder_name):
@@ -59,7 +60,7 @@ def addfile(message: telebot.types.Message):
 
 @bot.message_handler(commands=['qr'])
 def create_qr(message: telebot.types.Message):
-    qr = pyqrcode.create(os.getenv('CURRENT_IP') + ':5000' + '/qr/' + message.text.split()[1])
+    qr = pyqrcode.create('http://' + os.getenv('CURRENT_IP') + server_ip + '/qr/' + message.text.split()[1])
     qr_file_path = os.path.join(current_file_path, "qr_codes", str(message.text.split()[1:]) + '.png')
     if not os.path.exists(os.path.join(current_file_path, "qr_codes")):
         os.makedirs(os.path.join(current_file_path, "qr_codes"))
@@ -82,7 +83,7 @@ def add_subfolder(message: telebot.types.Message):
     bot.register_next_step_handler(message, get_folder)
 
 def get_to_publish(message: telebot.types.Message):
-    resp = requests.get('http://127.0.0.1:5000/qr/' + message.text)
+    resp = requests.get(f'http://127.0.0.1:{server_ip}/qr/' + message.text)
     if resp.status_code == 200:
         bot.reply_to(message, "Статья опубликована")
     else:
