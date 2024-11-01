@@ -53,4 +53,4 @@ def index():
     return "Не звоните сюда больше"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(config["server_port"]),debug=True)

@@ -2,5 +2,5 @@
     "wiki_path": "../letovo-wiki/docs/", 
     "token": "", 
     "secrets_path": "../letovo-wiki/docs/",
-    "server_ip": "5000"
+    "server_port": "5001"
 }
