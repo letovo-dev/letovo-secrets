@@ -6,6 +6,7 @@ import os
 import pyqrcode
 import hashlib
 import requests
+import pandas as pd
 
 current_file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -93,10 +94,6 @@ def add_subfolder(message: telebot.types.Message):
     bot.reply_to(message, "Введите название статьи:")
     bot.register_next_step_handler(message, get_to_publish)
 
-# @bot.callback_query_handler(func=lambda message: os.path.exists(os.path.join("./secret_files", message.text.split('_-_')[0], message.text.split('_-_')[1])))
-# def process_folder_name_step(message: telebot.types.Message):
-#     bot.reply_to(message, "Введите новое название файла:")
-#     bot.register_next_step_handler(message, change_name_step, message.text.split('_-_')[0], message.text.split('_-_')[1])
 
 @bot.callback_query_handler(func=lambda call: True)
 def process_folder_name_step(call: telebot.types.CallbackQuery):
@@ -104,6 +101,29 @@ def process_folder_name_step(call: telebot.types.CallbackQuery):
     bot.send_message(call.message.chat.id, "Введите новое имя файла:")
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
     bot.register_next_step_handler(call.message, change_name_step, folder, file)
+
+
+def process_players(message: telebot.types.Message):
+    if message.document:
+        file_info = bot.get_file('players_list.xlsx')
+        downloaded_file = bot.download_file(file_info.file_path)
+    else:
+        bot.reply_to(message, "Ашипка")
+        return
+    with open(os.path.join(current_file_path, 'players_list.xlsx'), 'wb') as new_file:
+        new_file.write(downloaded_file)
+
+    players = pd.read_excel('players_list.xlsx')
+    for player in players:
+        print(player)
+        bot.send_message(message.chat.id, f"Игрок {player} добавлен")
+        
+
+
+@bot.message_handler(commands=["add_players"])
+def add_players(message: telebot.types.Message):
+    bot.reply_to(message, "Отправьте файл. Файл отправляется строго в xlsx формате, иначе ничего не сработает:")
+    bot.register_next_step_handler(message, process_players)
 
 
 @bot.message_handler(commands=['help'])

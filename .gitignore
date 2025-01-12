@@ -1,3 +1,5 @@
 venv/*
 secret_files/*
 qr_codes/*
+.*
+*.xlsx
